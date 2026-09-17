@@ -95,7 +95,7 @@ fn xhtml_links_per_loc(xhtml_links: usize, locs: usize) -> f64 {
 }
 
 fn human_size(bytes: u64) -> String {
-    const UNITS: [&str; 5] = ["B", "KB", "MB", "GB", "TB"];
+    const UNITS: [&str; 5] = ["B", "KiB", "MiB", "GiB", "TiB"];
     let mut size = bytes as f64;
     let mut unit = 0;
     while size >= 1024.0 && unit < UNITS.len() - 1 {
@@ -117,8 +117,8 @@ mod tests {
     fn human_size_formatting() {
         assert_eq!(human_size(0), "0 B");
         assert_eq!(human_size(512), "512 B");
-        assert_eq!(human_size(1536), "1.50 KB");
-        assert_eq!(human_size(5 * 1024 * 1024), "5.00 MB");
-        assert_eq!(human_size(3 * 1024 * 1024 * 1024), "3.00 GB");
+        assert_eq!(human_size(1536), "1.50 KiB");
+        assert_eq!(human_size(5 * 1024 * 1024), "5.00 MiB");
+        assert_eq!(human_size(3 * 1024 * 1024 * 1024), "3.00 GiB");
     }
 }
