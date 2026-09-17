@@ -28,6 +28,12 @@ Some sites reject requests with no/generic `User-Agent` header (a 403 from the W
 sitemapper fetch <url> --user-agent "curl/8.7.1"
 ```
 
+If the sitemap is behind HTTP Basic Auth, pass credentials with `-u`/`--user` (applied to every request in the fetch tree, same as curl):
+
+```
+sitemapper fetch <url> -u username:password
+```
+
 ### Find
 
 Searches previously downloaded sitemap files under `./sitemaps/` for `<loc>` entries containing a substring, and prints JSON matches + stats.

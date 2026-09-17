@@ -16,7 +16,7 @@ struct Stats {
     loc_entries_found: usize,
 }
 
-pub async fn run(url: &str, user_agent: &str) -> Result<()> {
+pub async fn run(url: &str, user_agent: &str, basic_auth: Option<(String, String)>) -> Result<()> {
     let start = Instant::now();
     let host = url::Url::parse(url)
         .context("invalid URL")?
@@ -28,6 +28,7 @@ pub async fn run(url: &str, user_agent: &str) -> Result<()> {
     std::fs::create_dir_all(&dir)?;
 
     let client = reqwest::Client::builder().user_agent(user_agent).build()?;
+    let basic_auth = Arc::new(basic_auth);
     let stats = Arc::new(Mutex::new(Stats::default()));
     let used_names = Arc::new(Mutex::new(HashSet::new()));
     let semaphore = Arc::new(Semaphore::new(MAX_CONCURRENT_FETCHES));
@@ -37,6 +38,7 @@ pub async fn run(url: &str, user_agent: &str) -> Result<()> {
         client.clone(),
         url.to_string(),
         dir.clone(),
+        basic_auth.clone(),
         stats.clone(),
         used_names.clone(),
         semaphore.clone(),
@@ -49,6 +51,7 @@ pub async fn run(url: &str, user_agent: &str) -> Result<()> {
                     client.clone(),
                     child,
                     dir.clone(),
+                    basic_auth.clone(),
                     stats.clone(),
                     used_names.clone(),
                     semaphore.clone(),
@@ -75,6 +78,7 @@ async fn fetch_one(
     client: reqwest::Client,
     url: String,
     dir: PathBuf,
+    basic_auth: Arc<Option<(String, String)>>,
     stats: Arc<Mutex<Stats>>,
     used_names: Arc<Mutex<HashSet<String>>>,
     semaphore: Arc<Semaphore>,
@@ -82,7 +86,11 @@ async fn fetch_one(
     let _permit = semaphore.acquire_owned().await.expect("semaphore never closed");
 
     let outcome: Result<SitemapKind> = async {
-        let bytes = client.get(&url).send().await?.error_for_status()?.bytes().await?;
+        let mut req = client.get(&url);
+        if let Some((user, pass)) = basic_auth.as_ref() {
+            req = req.basic_auth(user, Some(pass));
+        }
+        let bytes = req.send().await?.error_for_status()?.bytes().await?;
         let bytes = sitemap::maybe_gunzip(bytes.to_vec());
         let kind = sitemap::parse(&bytes)?;
         let name = unique_name(&url, &used_names).await;
