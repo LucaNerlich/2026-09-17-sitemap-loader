@@ -34,6 +34,16 @@ If the sitemap is behind HTTP Basic Auth, pass credentials with `-u`/`--user` (a
 sitemapper fetch <url> -u username:password
 ```
 
+### Extract
+
+If a site's sitemap can't be fetched over HTTP (e.g. it errors out server-side) but you have an AEM content package export of it on disk, `extract` pulls the real sitemap files out of the package and copies them into the same `./sitemaps/<domain>/` layout `fetch` produces — so `find` works the same way regardless of source.
+
+```
+sitemapper extract [source]
+```
+
+`source` defaults to `./content-package`. AEM packages also contain JCR metadata XML files (`.content.xml`, and `<name>.xml.dir/` folders) alongside the real sitemaps; those are detected and skipped automatically (only files whose root element is `<urlset>`/`<sitemapindex>` are extracted). Locale/section subfolders in the package (e.g. `en_us/sitemap-1.xml`) are flattened into a single prefixed filename (`en_us-sitemap-1.xml`) rather than preserved as nested directories.
+
 ### Find
 
 Searches previously downloaded sitemap files under `./sitemaps/` for `<loc>` entries containing a substring, and prints JSON matches + stats.

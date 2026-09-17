@@ -1,9 +1,11 @@
+mod extract;
 mod fetch;
 mod find;
 mod sitemap;
 
 use anyhow::Context;
 use clap::{Parser, Subcommand};
+use std::path::PathBuf;
 
 #[derive(Parser)]
 #[command(name = "sitemapper", about = "Download and search XML sitemaps")]
@@ -30,6 +32,12 @@ enum Command {
         #[arg(long)]
         domain: Option<String>,
     },
+    /// Copy sitemap files out of an extracted AEM content package into ./sitemaps/,
+    /// preserving the package's directory structure (skips JCR metadata files)
+    Extract {
+        #[arg(default_value = "content-package")]
+        source: PathBuf,
+    },
 }
 
 #[tokio::main]
@@ -48,5 +56,6 @@ async fn main() -> anyhow::Result<()> {
             fetch::run(&url, &user_agent, basic_auth).await
         }
         Command::Find { substring, domain } => find::run(&substring, domain.as_deref()),
+        Command::Extract { source } => extract::run(&source),
     }
 }

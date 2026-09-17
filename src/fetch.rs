@@ -128,7 +128,7 @@ async fn unique_name(url: &str, used: &Arc<Mutex<HashSet<String>>>) -> String {
         .and_then(|u| u.path_segments().and_then(|mut s| s.next_back().map(str::to_string)))
         .filter(|s| !s.is_empty())
         .unwrap_or_else(|| "sitemap.xml".to_string());
-    let base = sanitize(&base);
+    let base = sitemap::sanitize_filename(&base);
 
     let mut used = used.lock().await;
     if used.insert(base.clone()) {
@@ -141,18 +141,5 @@ async fn unique_name(url: &str, used: &Arc<Mutex<HashSet<String>>>) -> String {
             return candidate;
         }
         i += 1;
-    }
-}
-
-fn sanitize(name: &str) -> String {
-    let name = name.strip_suffix(".gz").unwrap_or(name);
-    let cleaned: String = name
-        .chars()
-        .map(|c| if c.is_ascii_alphanumeric() || matches!(c, '.' | '-' | '_') { c } else { '_' })
-        .collect();
-    if cleaned.to_ascii_lowercase().ends_with(".xml") {
-        cleaned
-    } else {
-        format!("{cleaned}.xml")
     }
 }
