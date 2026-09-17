@@ -22,6 +22,12 @@ Downloads a sitemap or sitemap index (recursing into all child sitemaps, up to 8
 sitemapper fetch <url>
 ```
 
+If `<url>` has no path (just a domain, e.g. `https://www.sap.com`), `fetch` looks up `Sitemap:` entries in that domain's `/robots.txt` instead and fetches every tree declared there:
+
+```
+sitemapper fetch https://www.sap.com
+```
+
 Some sites reject requests with no/generic `User-Agent` header (a 403 from the WAF, not from robots.txt rules). If a fetch gets rejected, override the header:
 
 ```
@@ -33,6 +39,14 @@ If the sitemap is behind HTTP Basic Auth, pass credentials with `-u`/`--user` (a
 ```
 sitemapper fetch <url> -u username:password
 ```
+
+Fetching a large sitemap tree can trip a site's bot-detection (Akamai, etc.) — you'll see a run of `403 Forbidden` failures partway through, often with `server: AkamaiGHost` and an `Access Denied` body if you check with `curl -v`. That's a behavioral block from too many requests too fast, not a User-Agent problem, and retrying immediately with a different UA won't help — it usually needs a cool-down before the block clears. Crawl more politely with:
+
+```
+sitemapper fetch <url> --concurrency 2 --delay-ms 500
+```
+
+`--concurrency` caps simultaneous requests (default 8), `--delay-ms` adds a wait before each one (default 0).
 
 ### Extract
 
@@ -53,3 +67,11 @@ sitemapper find <substring> [--domain <domain>]
 ```
 
 `--domain` restricts the search to `./sitemaps/<domain>`; omit it to search every downloaded domain.
+
+### Stats
+
+Summarizes what's already downloaded under `./sitemaps/`, per domain: sitemap/index file counts, total loc entries, `<xhtml:link>` (hreflang alternate) counts with a per-loc ratio, and total on-disk size.
+
+```
+sitemapper stats [--domain <domain>]
+```

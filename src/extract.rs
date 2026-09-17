@@ -53,7 +53,7 @@ fn extract_one(
         stats.files_skipped += 1;
         return Ok(());
     };
-    let Ok(kind) = sitemap::parse(&bytes) else {
+    let Ok(parsed) = sitemap::parse(&bytes) else {
         stats.files_skipped += 1;
         return Ok(());
     };
@@ -76,7 +76,7 @@ fn extract_one(
     std::fs::write(&dest, &bytes)?;
 
     stats.sitemaps_extracted += 1;
-    if let SitemapKind::UrlSet(locs) = kind {
+    if let SitemapKind::UrlSet(locs) = parsed.kind {
         stats.loc_entries_found += locs.len();
     }
     Ok(())
